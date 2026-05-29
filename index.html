@@ -928,7 +928,7 @@ input, textarea, select { font-family: inherit; outline: none; }
       <div class="card-preview" id="cardPreview">
         <div class="preview-header">
           <span>📋 卡片预览</span>
-          <button class="btn-trigger-card" id="btnTriggerCard" style="display:none">🤖 让AI生成卡片</button>
+          <button class="btn-trigger-card" id="btnTriggerCard" style="display:none">🔄 根据对话更新卡片</button>
         </div>
         <div class="preview-empty" id="previewEmpty">
           AI 生成角色卡后<br>会在这里显示可编辑的预览
@@ -1917,7 +1917,9 @@ async function loadConversation(id) {
   state.currentConvId = conv.id;
   state.currentConversation = conv;
   state.editingCardId = conv.editCardId || null;
-  clearPreview();
+
+  // Scan messages for the last generated card data
+  restoreCardPreview(conv);
 
   // Update save button text based on editing mode
   updateSaveButtonText();
@@ -1926,12 +1928,32 @@ async function loadConversation(id) {
   if (conv.apiConfigId) document.getElementById('chatApiSelect').value = conv.apiConfigId;
   if (conv.personaId) document.getElementById('chatPersonaSelect').value = conv.personaId;
 
-  // Show trigger card button if there are messages
+  // Always show the update card button when there are messages
   document.getElementById('btnTriggerCard').style.display = conv.messages.length > 0 ? 'inline-block' : 'none';
 
   renderMessages();
   renderConvList();
   document.getElementById('btnSend').disabled = false;
+}
+
+// Restore card preview from conversation's message history
+function restoreCardPreview(conv) {
+  if (!conv || !conv.messages || conv.messages.length === 0) {
+    clearPreview();
+    return;
+  }
+  // Scan messages from last to first to find latest card
+  for (let i = conv.messages.length - 1; i >= 0; i--) {
+    const msg = conv.messages[i];
+    if (msg.role === 'assistant') {
+      const cardData = parseCardFromMessage(msg.content);
+      if (cardData && cardData.name) {
+        populatePreviewForm(cardData);
+        return;
+      }
+    }
+  }
+  clearPreview();
 }
 
 async function deleteConversation(id) {
@@ -2205,10 +2227,20 @@ async function triggerCardGeneration() {
 
   const apiConfigId = document.getElementById('chatApiSelect').value;
   const personaId = document.getElementById('chatPersonaSelect').value;
+  if (!apiConfigId || !personaId) {
+    showToast('请先选择 API 和 AI 人设', 'error');
+    return;
+  }
 
-  const triggerMsg = '请根据我们之前的对话内容，生成完整的角色卡 JSON。';
+  // Build a context-aware trigger message
+  let triggerMsg = '请根据我们上面的所有对话内容，整理并生成/更新完整的角色卡 JSON。用 [CHARACTER_CARD] ... [/CHARACTER_CARD] 格式输出。';
+  const cardData = getCardDataFromForm();
+  if (cardData && cardData.name) {
+    triggerMsg = '请根据我们上面的所有对话内容，更新角色卡。当前卡片信息供参考：\n' +
+      JSON.stringify(cardData, null, 2) +
+      '\n\n请输出更新后的完整角色卡 JSON，用 [CHARACTER_CARD] ... [/CHARACTER_CARD] 格式。';
+  }
 
-  input.value = '';
   document.getElementById('btnSend').disabled = true;
   state.isGenerating = true;
   appendMessage('user', triggerMsg);
