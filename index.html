@@ -224,6 +224,18 @@ input, textarea, select { font-family: inherit; outline: none; }
 
 .toolbar-spacer { flex: 1; }
 
+.btn-load-card {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--primary);
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-load-card:hover { background: var(--primary); color: #fff; }
+
 .btn-settings-link {
   background: transparent;
   color: var(--text-secondary);
@@ -458,6 +470,19 @@ input, textarea, select { font-family: inherit; outline: none; }
   max-width: 400px;
 }
 .cards-search input:focus { border-color: var(--primary); }
+
+.btn-import-card {
+  background: var(--primary-light);
+  border: 1px dashed var(--primary);
+  color: var(--primary-dark);
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-import-card:hover { background: var(--primary); color: #fff; border-style: solid; }
 
 .card-grid {
   display: grid;
@@ -871,6 +896,7 @@ input, textarea, select { font-family: inherit; outline: none; }
       <span class="toolbar-label">人设:</span>
       <select id="chatPersonaSelect"></select>
       <span class="toolbar-spacer"></span>
+      <button class="btn-load-card" onclick="showCardSelectModal()">🔄 修改已有卡片</button>
       <button class="btn-settings-link" onclick="switchPage('settings')">⚙️ 管理 API / 人设</button>
     </div>
 
@@ -935,6 +961,8 @@ input, textarea, select { font-family: inherit; outline: none; }
     <div class="cards-page">
       <div class="cards-search">
         <input type="text" id="cardSearch" placeholder="🔍 搜索角色名称或标签...">
+        <button class="btn-import-card" onclick="document.getElementById('importFileInput').click()">📥 导入角色卡</button>
+        <input type="file" id="importFileInput" accept=".json,.png" style="display:none" onchange="handleImportFile(event)">
       </div>
       <div class="card-grid" id="cardGrid"></div>
       <div class="empty-state" id="cardsEmpty">
@@ -1086,6 +1114,23 @@ input, textarea, select { font-family: inherit; outline: none; }
   </div>
 </div>
 
+<!-- Card Select Modal (for chat editing) -->
+<div class="modal-overlay hidden" id="cardSelectModalOverlay">
+  <div class="modal">
+    <h3>选择要修改的角色卡</h3>
+    <div style="margin-bottom:12px;">
+      <input type="text" id="cardSelectSearch" placeholder="🔍 搜索角色名称..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;" oninput="filterCardSelect()">
+    </div>
+    <div id="cardSelectList" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+    <div class="empty-state" id="cardSelectEmpty" style="display:none;">
+      <p>没有找到匹配的角色卡</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideCardSelectModal()">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -1221,6 +1266,7 @@ const state = {
   currentConvId: null,
   currentConversation: null,
   currentCardData: null,
+  editingCardId: null,
   isGenerating: false,
   settingsTab: 'api'
 };
@@ -1794,7 +1840,7 @@ function clearPreview() {
 // ============================================================
 // ===== Conversation Management =====
 // ============================================================
-async function createConversation() {
+async function createConversation(editCardId = null) {
   const apiConfigId = document.getElementById('chatApiSelect').value;
   const personaId = document.getElementById('chatPersonaSelect').value;
 
@@ -1807,11 +1853,24 @@ async function createConversation() {
     return;
   }
 
+  let cardContext = '';
+  if (editCardId) {
+    const card = await dbGet('cards', Number(editCardId));
+    if (card) {
+      cardContext = `\n\n【待修改的现有角色卡】\n名称: ${card.name}\n描述: ${card.description}\n性格: ${card.personality}\n背景: ${card.scenario}\n首次消息: ${card.first_mes}\n示例对话: ${card.mes_example}\n标签: ${Array.isArray(card.tags) ? card.tags.join(', ') : ''}\n备注: ${card.creator_notes}\n\n请帮助用户修改以上角色卡。`;
+    }
+  }
+
   const conv = {
-    title: '未完成卡',
+    title: editCardId ? '修改: ' + (await dbGet('cards', Number(editCardId))).name : '未完成卡',
     personaId: Number(personaId),
     apiConfigId: Number(apiConfigId),
-    messages: [],
+    editCardId: editCardId || null,
+    messages: cardContext ? [{
+      role: 'system',
+      content: '【系统指令】用户想修改一张已有的角色卡，卡片当前信息如下。请和用户对话了解他们想改什么，然后逐步修改。' + cardContext,
+      timestamp: Date.now()
+    }] : [],
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
@@ -1820,20 +1879,44 @@ async function createConversation() {
   conv.id = Number(id);
   state.currentConvId = conv.id;
   state.currentConversation = conv;
+  state.editingCardId = editCardId || null;
   clearPreview();
   renderConvList();
   renderMessages();
   document.getElementById('btnSend').disabled = false;
   document.getElementById('chatInput').focus();
-  showToast('新对话已创建', 'success');
+  if (editCardId) {
+    showToast('已加载卡片，开始和 AI 对话修改吧', 'success');
+  } else {
+    showToast('新对话已创建', 'success');
+  }
 }
+
+// Start chat-based editing from card library
+async function startChatEdit(cardId) {
+  switchPage('chat');
+  await new Promise(r => setTimeout(r, 100)); // Wait for page switch
+  await createConversation(cardId);
+}
+
+// Load card for editing from within chat page
+async function loadCardForEdit(cardId) {
+  if (!cardId) return;
+  await createConversation(Number(cardId));
+}
+
+async function loadConversation(id) {
 
 async function loadConversation(id) {
   const conv = await dbGet('conversations', Number(id));
   if (!conv) return;
   state.currentConvId = conv.id;
   state.currentConversation = conv;
+  state.editingCardId = conv.editCardId || null;
   clearPreview();
+
+  // Update save button text based on editing mode
+  updateSaveButtonText();
 
   // Update selects to match conversation's settings
   if (conv.apiConfigId) document.getElementById('chatApiSelect').value = conv.apiConfigId;
@@ -1872,7 +1955,9 @@ async function renderConvList() {
   } else {
     container.innerHTML = convs.map(c => `
       <div class="conv-item ${c.id === state.currentConvId ? 'active' : ''}" onclick="loadConversation(${c.id})">
-        <div class="conv-item-title">${escHtml(c.title)}</div>
+        <div class="conv-item-title">
+          ${c.editCardId ? '🔄 ' : ''}${escHtml(c.title)}
+        </div>
         <div class="conv-item-meta">
           <span>${formatTime(c.createdAt)}</span>
           <span>${c.messages.length} 条消息</span>
@@ -2069,19 +2154,36 @@ async function saveCard() {
     return;
   }
 
-  const card = {
-    ...cardData,
-    avatar: '',
-    isPinned: false,
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  };
-
   try {
-    await dbAdd('cards', card);
-    showToast('角色卡已保存到卡片库！', 'success');
+    // Check if we're editing an existing card
+    const editCardId = state.currentConversation?.editCardId;
+    if (editCardId) {
+      // Update existing card
+      const existing = await dbGet('cards', editCardId);
+      if (existing) {
+        const updatedCard = {
+          ...existing,
+          ...cardData,
+          updatedAt: Date.now()
+        };
+        await dbPut('cards', updatedCard);
+        showToast('角色卡已更新！', 'success');
+      }
+    } else {
+      // Create new card
+      const card = {
+        ...cardData,
+        avatar: '',
+        isPinned: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      await dbAdd('cards', card);
+      showToast('角色卡已保存到卡片库！', 'success');
+    }
+
     // Update conversation title if needed
-    if (state.currentConversation && state.currentConversation.title === '未完成卡') {
+    if (state.currentConversation && (state.currentConversation.title === '未完成卡' || state.currentConversation.title.startsWith('修改:'))) {
       state.currentConversation.title = cardData.name;
       await dbPut('conversations', state.currentConversation);
       renderConvList();
@@ -2174,6 +2276,7 @@ async function renderCardsPage() {
         <div class="card-item-actions">
           <button class="btn-pin" onclick="togglePin(${c.id})">${c.isPinned ? '📌 取消置顶' : '⭐ 置顶'}</button>
           <button onclick="editCardFromLibrary(${c.id})">✏️ 编辑</button>
+          <button onclick="startChatEdit(${c.id})" style="color:var(--primary);border-color:var(--primary);">💬 AI修改</button>
           <button onclick="exportCardJSON(${c.id})">📄 JSON</button>
           <button onclick="exportCardPNG(${c.id})">🖼️ PNG</button>
           <button class="btn-danger" onclick="deleteCard(${c.id})">🗑️ 删除</button>
@@ -2220,6 +2323,70 @@ function editCardFromLibrary(id) {
 
 function hideCardEditModal() {
   document.getElementById('cardEditModalOverlay').classList.add('hidden');
+}
+
+// ============================================================
+// ===== Card Select Modal (for chat editing) =====
+// ============================================================
+async function showCardSelectModal() {
+  document.getElementById('cardSelectModalOverlay').classList.remove('hidden');
+  document.getElementById('cardSelectSearch').value = '';
+  await renderCardSelectList();
+}
+
+function hideCardSelectModal() {
+  document.getElementById('cardSelectModalOverlay').classList.add('hidden');
+}
+
+async function filterCardSelect() {
+  await renderCardSelectList(document.getElementById('cardSelectSearch').value);
+}
+
+async function renderCardSelectList(filter = '') {
+  const cards = await dbGetAll('cards');
+  cards.sort((a, b) => b.updatedAt - a.updatedAt);
+
+  const term = filter.toLowerCase();
+  const filtered = term
+    ? cards.filter(c => (c.name || '').toLowerCase().includes(term))
+    : cards;
+
+  const list = document.getElementById('cardSelectList');
+  const empty = document.getElementById('cardSelectEmpty');
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    list.innerHTML = filtered.map(c => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all var(--transition);"
+           onclick="selectCardForEdit(${c.id})"
+           onmouseover="this.style.background='var(--primary-light)';this.style.borderColor='var(--primary)'"
+           onmouseout="this.style.background='';this.style.borderColor='var(--border)'">
+        <div>
+          <div style="font-weight:600;font-size:14px;">${escHtml(c.name || '未命名')}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${escHtml((c.description || '').substring(0, 60))}</div>
+        </div>
+        <span style="font-size:20px;">→</span>
+      </div>
+    `).join('');
+  }
+}
+
+async function selectCardForEdit(cardId) {
+  hideCardSelectModal();
+  await createConversation(Number(cardId));
+}
+
+// Update save button text based on mode
+function updateSaveButtonText() {
+  const btn = document.getElementById('btnSaveCard');
+  if (state.currentConversation?.editCardId) {
+    btn.textContent = '💾 更新角色卡';
+  } else {
+    btn.textContent = '💾 保存到卡片库';
+  }
 }
 
 async function saveCardEdit() {
@@ -2424,6 +2591,155 @@ function downloadFile(filename, content, mimeType) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// ===== Import Card Functions =====
+// ============================================================
+async function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    if (file.name.endsWith('.json')) {
+      await importFromJSON(file);
+    } else if (file.name.endsWith('.png')) {
+      await importFromPNG(file);
+    } else {
+      showToast('不支持的文件格式，请选择 .json 或 .png 文件', 'error');
+    }
+  } catch (err) {
+    showToast('导入失败: ' + err.message, 'error');
+    console.error(err);
+  }
+
+  // Reset file input so the same file can be re-imported
+  event.target.value = '';
+}
+
+async function importFromJSON(file) {
+  const text = await file.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error('JSON 解析失败，请检查文件格式');
+  }
+
+  const cardData = extractCardData(data);
+  if (!cardData) throw new Error('无法识别的角色卡格式，请确保是 SillyTavern 格式');
+
+  await dbAdd('cards', {
+    ...cardData,
+    avatar: '',
+    isPinned: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  });
+
+  await renderCardsPage();
+  showToast(`已导入角色卡「${cardData.name || '未命名'}」`, 'success');
+}
+
+async function importFromPNG(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+
+  // Extract tEXt chunks from PNG
+  const charaJson = extractCharaFromPNG(bytes);
+  if (!charaJson) throw new Error('PNG 中未找到角色卡数据，请确保是 SillyTavern 导出的角色卡');
+
+  let data;
+  try {
+    data = JSON.parse(charaJson);
+  } catch (e) {
+    throw new Error('PNG 中的角色卡数据解析失败');
+  }
+
+  const cardData = extractCardData(data);
+  if (!cardData) throw new Error('无法识别的角色卡格式');
+
+  await dbAdd('cards', {
+    ...cardData,
+    avatar: '',
+    isPinned: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  });
+
+  await renderCardsPage();
+  showToast(`已导入角色卡「${cardData.name || '未命名'}」`, 'success');
+}
+
+function extractCardData(data) {
+  // SillyTavern V2 format: { spec: "chara_card_v2", data: { ... } }
+  if (data.spec === 'chara_card_v2' && data.data) {
+    const d = data.data;
+    return {
+      name: d.name || '',
+      description: d.description || '',
+      personality: d.personality || '',
+      scenario: d.scenario || '',
+      first_mes: d.first_mes || '',
+      mes_example: d.mes_example || '',
+      tags: Array.isArray(d.tags) ? d.tags : [],
+      creator_notes: d.creator_notes || ''
+    };
+  }
+  // Raw card data (V1 or plain object with known fields)
+  if (data.name !== undefined || data.description !== undefined) {
+    return {
+      name: data.name || '',
+      description: data.description || '',
+      personality: data.personality || '',
+      scenario: data.scenario || '',
+      first_mes: data.first_mes || '',
+      mes_example: data.mes_example || '',
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      creator_notes: data.creator_notes || ''
+    };
+  }
+  return null;
+}
+
+function extractCharaFromPNG(bytes) {
+  // PNG signature: 8 bytes
+  if (bytes[0] !== 137 || bytes[1] !== 80 || bytes[2] !== 78 || bytes[3] !== 71) {
+    return null; // Not a PNG
+  }
+
+  let pos = 8;
+  while (pos < bytes.length - 12) {
+    // Read chunk length (4 bytes, big-endian)
+    const len = (bytes[pos] << 24) | (bytes[pos+1] << 16) | (bytes[pos+2] << 8) | bytes[pos+3];
+    // Read chunk type (4 bytes)
+    const type = String.fromCharCode(bytes[pos+4], bytes[pos+5], bytes[pos+6], bytes[pos+7]);
+
+    if (type === 'tEXt') {
+      // Read chunk data
+      const chunkData = bytes.subarray(pos + 8, pos + 8 + len);
+      // Find null separator between keyword and text
+      const nullIdx = chunkData.indexOf(0);
+      if (nullIdx > 0) {
+        const keyword = new TextDecoder().decode(chunkData.subarray(0, nullIdx));
+        if (keyword === 'chara') {
+          const value = new TextDecoder().decode(chunkData.subarray(nullIdx + 1));
+          // Value is base64-encoded JSON
+          try {
+            const json = atob(value);
+            return json;
+          } catch (e) {
+            return null;
+          }
+        }
+      }
+    }
+
+    // Move to next chunk
+    pos += 12 + len; // len(4) + type(4) + data(len) + crc(4)
+  }
+
+  return null;
 }
 
 // ============================================================
