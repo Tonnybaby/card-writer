@@ -1154,7 +1154,7 @@ input, textarea, select { font-family: inherit; outline: none; }
 // ===== IndexedDB Wrapper =====
 // ============================================================
 const DB_NAME = 'SillyTavernCardWriter';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let db = null;
 
@@ -1163,6 +1163,8 @@ function openDB() {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
+      const oldVer = e.oldVersion;
+
       if (!db.objectStoreNames.contains('apiConfigs')) {
         db.createObjectStore('apiConfigs', { keyPath: 'id', autoIncrement: true });
       }
@@ -1174,6 +1176,25 @@ function openDB() {
       }
       if (!db.objectStoreNames.contains('cards')) {
         db.createObjectStore('cards', { keyPath: 'id', autoIncrement: true });
+      }
+
+      // v2 migration: update default persona prompt
+      if (oldVer < 2) {
+        const tx = e.target.transaction;
+        const personaStore = tx.objectStore('aiPersonas');
+        const cursorReq = personaStore.openCursor();
+        cursorReq.onsuccess = (ev) => {
+          const cursor = ev.target.result;
+          if (cursor) {
+            const p = cursor.value;
+            if (p.name === '通用角色卡助手') {
+              p.systemPrompt = DEFAULT_PERSONA_PROMPT;
+              p.updatedAt = Date.now();
+              cursor.update(p);
+            }
+            cursor.continue();
+          }
+        };
       }
     };
     request.onsuccess = (e) => {
