@@ -1163,7 +1163,6 @@ function openDB() {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
-      const oldVer = e.oldVersion;
 
       if (!db.objectStoreNames.contains('apiConfigs')) {
         db.createObjectStore('apiConfigs', { keyPath: 'id', autoIncrement: true });
@@ -1178,24 +1177,7 @@ function openDB() {
         db.createObjectStore('cards', { keyPath: 'id', autoIncrement: true });
       }
 
-      // Migration: update default persona prompt for existing users
-      if (oldVer < 2 || oldVer < 3) {
-        const tx = e.target.transaction;
-        const personaStore = tx.objectStore('aiPersonas');
-        const cursorReq = personaStore.openCursor();
-        cursorReq.onsuccess = (ev) => {
-          const cursor = ev.target.result;
-          if (cursor) {
-            const p = cursor.value;
-            if (p.name === '通用角色卡助手') {
-              p.systemPrompt = DEFAULT_PERSONA_PROMPT;
-              p.updatedAt = Date.now();
-              cursor.update(p);
-            }
-            cursor.continue();
-          }
-        };
-      }
+      // v3: will handle migration in init() after DB opens
     };
     request.onsuccess = (e) => {
       db = e.target.result;
@@ -2857,9 +2839,17 @@ document.getElementById('cardSearch').addEventListener('input', renderCardsPage)
 async function init() {
   await openDB();
 
-  // Ensure default persona exists
+  // Ensure default persona exists and is up-to-date
   const personas = await dbGetAll('aiPersonas');
-  if (personas.length === 0) {
+  const defaultPersona = personas.find(p => p.name === '通用角色卡助手');
+  if (defaultPersona) {
+    // Always update to latest system prompt
+    defaultPersona.systemPrompt = DEFAULT_PERSONA_PROMPT;
+    defaultPersona.description = '默认人设，适合大多数角色卡创建场景';
+    defaultPersona.updatedAt = Date.now();
+    await dbPut('aiPersonas', defaultPersona);
+  } else if (personas.length === 0) {
+    // No personas at all — create default
     await dbAdd('aiPersonas', {
       name: '通用角色卡助手',
       description: '默认人设，适合大多数角色卡创建场景',
