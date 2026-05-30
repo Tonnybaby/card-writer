@@ -1532,6 +1532,7 @@ const state = {
   cardRequested: false,   // true only when user clicked generate button
   generatingForConvId: null, // lock: which conversation is AI generating for
   personaName: 'AI 助手',  // cached persona name for display
+  editingMessageIdx: -1,   // which message is being edited inline
   isGenerating: false,
   settingsTab: 'api'
 };
@@ -2376,11 +2377,12 @@ function renderMessages() {
     .filter(m => !m.hidden)
     .map((m, idx) => {
     const isUser = m.role === 'user';
+    const isEditing = state.editingMessageIdx === idx;
     const cardData = parseCardFromMessage(m.content);
-    let contentHtml = renderMarkdown(m.content);
+    let contentHtml = isEditing ? '' : renderMarkdown(m.content);
 
     // Highlight card JSON
-    if (cardData) {
+    if (cardData && !isEditing) {
       contentHtml = contentHtml.replace(
         /\[CHARACTER_CARD\][\s\S]*\[\/CHARACTER_CARD\]/g,
         '<div style="background:#e8f5e9;border:1px solid #a5d6a7;padding:10px;border-radius:6px;margin:8px 0;font-size:12px;">✅ 角色卡已生成！请在右侧面板预览和编辑</div>'
@@ -2392,13 +2394,21 @@ function renderMessages() {
         <div class="message-avatar">${isUser ? '👤' : '🎀'}</div>
         <div style="flex:1;min-width:0;">
           ${!isUser ? `<div class="message-role">${escHtml(aiName)}</div>` : ''}
-          <div class="message-bubble">${contentHtml}</div>
-          ${m.timestamp ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${formatTime(m.timestamp)}</div>` : ''}
-          <div class="message-actions">
-            <button onclick="editMessage(${idx})" title="编辑后重问AI">✏️</button>
-            <button onclick="deleteMessage(${idx})" title="删除此消息及之后">🗑️</button>
-            <button onclick="copyMessage(${idx})" title="复制">📋</button>
-          </div>
+          ${isEditing ? `
+            <textarea class="message-edit-input" id="editMsg_${idx}" rows="4">${escHtml(m.content)}</textarea>
+            <div class="message-edit-actions">
+              <button class="btn-save-edit" onclick="saveMessageEdit(${idx})">✓ 确认并重问AI</button>
+              <button class="btn-cancel-edit" onclick="cancelMessageEdit()">取消</button>
+            </div>
+          ` : `
+            <div class="message-bubble">${contentHtml}</div>
+            ${m.timestamp ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${formatTime(m.timestamp)}</div>` : ''}
+            <div class="message-actions">
+              <button onclick="editMessage(${idx})" title="编辑后重问AI">✏️</button>
+              <button onclick="deleteMessage(${idx})" title="删除此消息及之后">🗑️</button>
+              <button onclick="copyMessage(${idx})" title="复制">📋</button>
+            </div>
+          `}
         </div>
       </div>
     `;
@@ -3253,18 +3263,83 @@ async function saveRenameConv(id) {
 function editMessage(idx) {
   if (state.isGenerating) return;
   const conv = state.currentConversation;
-  if (!conv) return;
-  const msg = conv.messages[idx];
-  if (!msg) return;
-  // Truncate conversation to before this message
-  conv.messages = conv.messages.slice(0, idx);
-  conv.updatedAt = Date.now();
-  // Show the message content in input for editing
-  document.getElementById('chatInput').value = msg.content;
-  document.getElementById('chatInput').focus();
+  if (!conv || idx >= conv.messages.length) return;
+  state.editingMessageIdx = idx;
   renderMessages();
-  dbPut('conversations', conv);
-  showToast('消息已加载到输入框，修改后重新发送', 'info');
+  // Focus the edit textarea after render
+  requestAnimationFrame(() => {
+    const ta = document.getElementById(`editMsg_${idx}`);
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  });
+}
+
+async function saveMessageEdit(idx) {
+  const conv = state.currentConversation;
+  if (!conv) return;
+  const ta = document.getElementById(`editMsg_${idx}`);
+  if (!ta) return;
+  const newContent = ta.value.trim();
+  if (!newContent) { showToast('消息不能为空', 'error'); return; }
+
+  // Update the message content
+  conv.messages[idx].content = newContent;
+  // Truncate all messages after this one
+  conv.messages = conv.messages.slice(0, idx + 1);
+  conv.updatedAt = Date.now();
+  state.editingMessageIdx = -1;
+  renderMessages();
+  await dbPut('conversations', conv);
+
+  // Now resend to AI — reuse the send logic
+  if (idx === conv.messages.length - 1) {
+    // The edited message is the last one, resend to AI
+    await resendToAI();
+  }
+}
+
+function cancelMessageEdit() {
+  state.editingMessageIdx = -1;
+  renderMessages();
+}
+
+async function resendToAI() {
+  const conv = state.currentConversation;
+  if (!conv) return;
+  const apiConfigId = document.getElementById('chatApiSelect').value;
+  const personaId = document.getElementById('chatPersonaSelect').value;
+  if (!apiConfigId || !personaId) { showToast('请选择 API 和 AI 人设', 'error'); return; }
+
+  state.generatingForConvId = conv.id;
+  document.getElementById('btnSend').disabled = true;
+  document.getElementById('btnStopGenerate').style.display = 'inline-block';
+  state.isGenerating = true;
+
+  // Show typing indicator
+  const msgContainer = document.getElementById('messagesContainer');
+  const typingEl = document.createElement('div');
+  typingEl.className = 'message ai';
+  typingEl.id = 'typingIndicator';
+  typingEl.innerHTML = `<div class="message-avatar">🎀</div><div class="message-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+  msgContainer.appendChild(typingEl);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  abortController = new AbortController();
+  try {
+    const response = await callAIWithAbort(apiConfigId, personaId, conv.messages, abortController.signal);
+    const ti = document.getElementById('typingIndicator');
+    if (ti) ti.remove();
+    appendMessage('assistant', response);
+  } catch (err) {
+    const ti = document.getElementById('typingIndicator');
+    if (ti) ti.remove();
+    if (err.name !== 'AbortError') { showToast('发送失败: ' + err.message, 'error'); }
+  }
+
+  abortController = null;
+  state.isGenerating = false;
+  state.generatingForConvId = null;
+  document.getElementById('btnSend').disabled = false;
+  document.getElementById('btnStopGenerate').style.display = 'none';
 }
 
 function deleteMessage(idx) {
@@ -3368,6 +3443,14 @@ document.getElementById('chatInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.shiftKey) {
     e.preventDefault();
     sendMessage();
+  }
+});
+
+// ESC to cancel message edit
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.editingMessageIdx >= 0) {
+    e.preventDefault();
+    cancelMessageEdit();
   }
 });
 
