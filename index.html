@@ -990,9 +990,10 @@ input, textarea, select { font-family: inherit; outline: none; }
   /* Conv list hidden on mobile — use drawer instead */
   .conv-list { display: none; }
 
-  /* Chat settings bar — sticky */
+  /* Chat settings bar — fixed below topbar */
   .chat-settings-bar {
-    position: sticky; top: 48px; z-index: 10;
+    position: fixed; top: 48px; left: 0; width: 100%;
+    z-index: 90;
     padding: 6px 10px; gap: 6px;
     background: var(--primary-soft); border-bottom: 1px solid var(--border);
   }
@@ -1003,7 +1004,10 @@ input, textarea, select { font-family: inherit; outline: none; }
   .messages-container {
     flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
     padding: 10px; gap: 8px;
-    height: calc(100vh - 48px - 36px - 52px - 56px);
+    /* topbar(48) + settings(38) + input(54) + tab(56) = 196 */
+    height: calc(100vh - 196px);
+    margin-top: 38px;
+    padding-bottom: 54px;
   }
   .message { max-width: 92%; }
   .message-bubble { font-size: 13px; padding: 8px 12px; }
