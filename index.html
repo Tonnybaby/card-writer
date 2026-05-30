@@ -2890,7 +2890,7 @@ async function refreshPersonaSelects() {
   });
   sel.innerHTML = personas.length === 0
     ? '<option value="">-- 请先添加 AI 人设 --</option>'
-    : personas.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    : personas.map(p => `<option value="${p.id}">${p.avatar || ''} ${p.name}</option>`).join('');
   await updatePersonaName();
 }
 
@@ -2943,7 +2943,7 @@ async function renderSettingsPage() {
       personaList.innerHTML += systemPersonas.map(p => `
         <div class="config-item" style="background:var(--primary-soft);border-color:var(--primary-light);">
           <div class="config-info">
-            <h4>${escHtml(p.name)} <span style="font-size:10px;background:var(--primary);color:#fff;padding:2px 6px;border-radius:10px;">系统</span></h4>
+            <h4>${p.avatar || ''} ${escHtml(p.name)} <span style="font-size:10px;background:var(--primary);color:#fff;padding:2px 6px;border-radius:10px;">系统</span></h4>
             <p>${escHtml(p.description || '')}</p>
           </div>
           <div class="config-actions">
@@ -4611,9 +4611,9 @@ async function init() {
 
   // Upsert system personas
   const systemPersonas = [
-    { name: 'ai写卡助手', description: '一个经验极深的 SillyTavern 角色卡写手', prompt: AIWRITER_PROMPT },
-    { name: '柚乃', description: '二次元助手少女', prompt: YUZUNA_PROMPT },
-    { name: '郭德纲', description: '相声演员郭德纲老师在线写卡', prompt: GUODEGANG_PROMPT }
+    { name: 'ai写卡助手', description: '一个经验极深的 SillyTavern 角色卡写手', prompt: AIWRITER_PROMPT, avatar: '✍️' },
+    { name: '柚乃', description: '二次元助手少女', prompt: YUZUNA_PROMPT, avatar: '🌸' },
+    { name: '郭德纲', description: '相声演员郭德纲老师在线写卡', prompt: GUODEGANG_PROMPT, avatar: '🎤' }
   ];
 
   for (const sp of systemPersonas) {
@@ -4622,6 +4622,7 @@ async function init() {
       existing.systemPrompt = sp.prompt;
       existing.description = sp.description;
       existing.isSystem = true;
+      existing.avatar = sp.avatar;
       existing.updatedAt = Date.now();
       await dbPut('aiPersonas', existing);
     } else {
@@ -4630,6 +4631,7 @@ async function init() {
         description: sp.description,
         systemPrompt: sp.prompt,
         isSystem: true,
+        avatar: sp.avatar,
         createdAt: Date.now(),
         updatedAt: Date.now()
       });
