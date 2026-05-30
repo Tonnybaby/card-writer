@@ -883,33 +883,80 @@ input, textarea, select { font-family: inherit; outline: none; }
   30% { transform: translateY(-8px); }
 }
 /* ===== Collapsible Panels ===== */
-.panel-collapse-btn {
-  background: transparent;
-  border: none;
+.conv-list, .card-preview, .chat-area {
+  transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+/* Collapse toggle button — round, positioned on divider */
+.collapse-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   cursor: pointer;
-  font-size: 16px;
-  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
   color: var(--text-secondary);
-  transition: all var(--transition);
+  z-index: 5;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  padding: 0;
   line-height: 1;
 }
-.panel-collapse-btn:hover { color: var(--primary-dark); }
+.collapse-toggle:hover {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
 
-.conv-list.collapsed { width: 40px; min-width: 40px; }
-.conv-list.collapsed .conv-list-header span,
-.conv-list.collapsed .conv-item-title,
-.conv-list.collapsed .conv-item-meta,
-.conv-list.collapsed .conv-item-actions,
-.conv-list.collapsed .btn-new-chat { display: none; }
-.conv-list.collapsed .conv-list-header { justify-content: center; padding: 14px 8px; }
+/* Left divider toggle (between conv-list and chat-area) */
+#toggleConvList {
+  left: -14px;
+}
+/* Right divider toggle (between chat-area and card-preview) */
+#toggleCardPreview {
+  left: -14px;
+}
 
-.chat-area.collapsed { display: none; }
-.card-preview.collapsed { width: 40px; min-width: 40px; overflow: hidden; }
-.card-preview.collapsed .preview-header span,
-.card-preview.collapsed .preview-form,
-.card-preview.collapsed .preview-empty p,
-.card-preview.collapsed .btn-generate-from-chat { display: none; }
-.card-preview.collapsed .preview-header { justify-content: center; padding: 14px 8px; }
+/* Divider wrappers need position:relative */
+.divider-left, .divider-right {
+  position: relative;
+  flex-shrink: 0;
+  width: 1px;
+}
+
+/* Collapsed states */
+.conv-list.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden;
+  padding: 0;
+  border-right: none;
+  opacity: 0;
+}
+.card-preview.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden;
+  padding: 0;
+  border-left: none;
+  opacity: 0;
+}
+
+/* When collapsed, flip the arrow icon */
+.collapse-toggle.flipped svg { transform: rotate(180deg); }
+.collapse-toggle svg {
+  transition: transform 0.2s ease;
+  width: 12px;
+  height: 12px;
+}
 
 /* ===== Message Actions ===== */
 .message-actions {
@@ -1095,12 +1142,16 @@ input, textarea, select { font-family: inherit; outline: none; }
       <div class="conv-list">
         <div class="conv-list-header">
           <span>📝 对话列表</span>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <button class="btn-new-chat" id="btnNewChat">+ 新建</button>
-            <button class="panel-collapse-btn" onclick="togglePanel('convList')" title="折叠">◀</button>
-          </div>
+          <button class="btn-new-chat" id="btnNewChat">+ 新建</button>
         </div>
         <div class="conv-list-items" id="convList"></div>
+      </div>
+
+      <!-- Left Divider -->
+      <div class="divider-left">
+        <button class="collapse-toggle" id="toggleConvList" onclick="toggleCollapsePanel('convList')" title="折叠对话列表">
+          <svg viewBox="0 0 16 16" width="14" height="14"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
 
       <!-- Chat Area -->
@@ -1112,18 +1163,23 @@ input, textarea, select { font-family: inherit; outline: none; }
           </div>
         </div>
         <div class="chat-input-area">
-          <button class="panel-collapse-btn" onclick="togglePanel('chatArea')" title="折叠聊天" style="flex-shrink:0;">▼</button>
           <textarea id="chatInput" placeholder="输入消息，Shift+Enter 发送，Enter 换行..." rows="2"></textarea>
           <button class="btn-send" id="btnSend" disabled>发送</button>
           <button class="btn-stop-generate" id="btnStopGenerate" style="display:none;" onclick="stopGeneration()">⏹ 停止</button>
         </div>
       </div>
 
+      <!-- Right Divider -->
+      <div class="divider-right">
+        <button class="collapse-toggle" id="toggleCardPreview" onclick="toggleCollapsePanel('cardPreview')" title="折叠卡片预览">
+          <svg viewBox="0 0 16 16" width="14" height="14"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
       <!-- Card Preview -->
       <div class="card-preview" id="cardPreview">
         <div class="preview-header">
           <span>📋 卡片预览</span>
-          <button class="panel-collapse-btn" onclick="togglePanel('cardPreview')" title="折叠">▶</button>
         </div>
         <div class="preview-empty" id="previewEmpty">
           <p style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">点击下方按钮<br>让 AI 根据对话生成角色卡</p>
@@ -3127,16 +3183,43 @@ function extractCharaFromPNG(bytes) {
 }
 
 // ============================================================
-// ===== Panel Collapse =====
+// ===== Panel Collapse (ChatGPT style) =====
 // ============================================================
-function togglePanel(name) {
-  let el, btn;
-  if (name === 'convList') { el = document.querySelector('.conv-list'); btn = document.querySelector('.conv-list-header .panel-collapse-btn'); }
-  else if (name === 'chatArea') { el = document.getElementById('chatArea'); btn = document.querySelector('.chat-input-area .panel-collapse-btn'); }
-  else if (name === 'cardPreview') { el = document.getElementById('cardPreview'); btn = document.querySelector('.preview-header .panel-collapse-btn'); }
+function toggleCollapsePanel(name) {
+  const el = document.querySelector(name === 'convList' ? '.conv-list' : '#cardPreview');
+  const btn = document.getElementById(name === 'convList' ? 'toggleConvList' : 'toggleCardPreview');
   if (!el) return;
   el.classList.toggle('collapsed');
-  if (btn) btn.textContent = el.classList.contains('collapsed') ? (name === 'cardPreview' ? '◀' : '▶') : (name === 'cardPreview' ? '▶' : '▼');
+  // Flip the arrow direction
+  if (btn) {
+    btn.classList.toggle('flipped', el.classList.contains('collapsed'));
+  }
+  // Save state to localStorage
+  saveCollapseState();
+}
+
+function saveCollapseState() {
+  const state = {
+    convList: document.querySelector('.conv-list').classList.contains('collapsed'),
+    cardPreview: document.getElementById('cardPreview').classList.contains('collapsed')
+  };
+  localStorage.setItem('panelCollapseState', JSON.stringify(state));
+}
+
+function restoreCollapseState() {
+  const saved = localStorage.getItem('panelCollapseState');
+  if (!saved) return;
+  try {
+    const state = JSON.parse(saved);
+    if (state.convList) {
+      document.querySelector('.conv-list').classList.add('collapsed');
+      document.getElementById('toggleConvList').classList.add('flipped');
+    }
+    if (state.cardPreview) {
+      document.getElementById('cardPreview').classList.add('collapsed');
+      document.getElementById('toggleCardPreview').classList.add('flipped');
+    }
+  } catch (e) {}
 }
 
 // ============================================================
@@ -3299,6 +3382,9 @@ document.getElementById('cardSearch').addEventListener('input', renderCardsPage)
 // ============================================================
 async function init() {
   await openDB();
+
+  // Restore panel collapse state
+  restoreCollapseState();
 
   // Ensure default persona exists and is up-to-date
   const personas = await dbGetAll('aiPersonas');
