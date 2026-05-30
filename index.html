@@ -290,7 +290,7 @@ input, textarea, select { font-family: inherit; outline: none; }
 .message.user .message-avatar { background: #ffe4e1; }
 
 .message-bubble {
-  padding: 12px 16px 28px 16px;
+  padding: 12px 16px;
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.6;
@@ -962,22 +962,21 @@ input, textarea, select { font-family: inherit; outline: none; }
 .message-actions {
   display: flex;
   gap: 2px;
-  position: absolute;
-  bottom: 4px;
-  right: 8px;
+  justify-content: flex-end;
+  margin-top: 2px;
 }
 .message-actions button {
   font-size: 10px;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 3px;
-  background: rgba(255,255,255,0.7);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: none;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition);
-  backdrop-filter: blur(2px);
+  opacity: 0.5;
 }
-.message-actions button:hover { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary); }
+.message-actions button:hover { opacity: 1; color: var(--primary-dark); }
 
 /* ===== Stop Generation Button ===== */
 .btn-stop-generate {
@@ -2434,12 +2433,11 @@ function renderMessages() {
               <button class="btn-cancel-edit" onclick="cancelMessageEdit()">取消</button>
             </div>
           ` : `
-            <div class="message-bubble">${contentHtml}
-              <div class="message-actions">
-                <button onclick="editMessage(${idx})" title="编辑">✏️</button>
-                <button onclick="deleteMessage(${idx})" title="删除">🗑️</button>
-                <button onclick="copyMessage(${idx})" title="复制">📋</button>
-              </div>
+            <div class="message-bubble">${contentHtml}</div>
+            <div class="message-actions">
+              <button onclick="editMessage(${idx})" title="编辑">✏️</button>
+              <button onclick="deleteMessage(${idx})" title="删除">🗑️</button>
+              <button onclick="copyMessage(${idx})" title="复制">📋</button>
             </div>
             ${m.timestamp ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${formatTime(m.timestamp)}</div>` : ''}
           `}
