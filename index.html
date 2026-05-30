@@ -923,10 +923,8 @@ input, textarea, select { font-family: inherit; outline: none; }
   .topbar-author { font-size: 9px; margin-left: auto; }
   .topbar-brand { margin-right: auto; }
 
-  /* Show API/persona selects in topbar on mobile */
-  .mobile-selects {
-    display: flex; gap: 4px; align-items: center;
-  }
+  /* Hide API/persona selects in topbar on mobile */
+  .mobile-selects { display: none; }
 
   /* Body layout */
   .body-layout { flex-direction: column; overflow-y: auto; flex: 1; }
@@ -974,6 +972,28 @@ input, textarea, select { font-family: inherit; outline: none; }
   .chat-input-area textarea { flex: 1; font-size: 14px; padding: 8px 10px; min-height: 40px; max-height: 100px; }
   .btn-send { width: 64px; flex-shrink: 0; padding: 8px 0; font-size: 13px; border-radius: 20px; }
   .btn-stop-generate { font-size: 11px; padding: 6px 10px; }
+
+  /* World book mobile fix */
+  .world-book-section {
+    padding: 12px 0;
+  }
+  .world-book-section label {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: nowrap;
+  }
+  .world-book-entry {
+    padding: 8px; gap: 4px; margin-bottom: 12px;
+  }
+  .world-book-entry-row {
+    flex-wrap: wrap; gap: 4px;
+  }
+  .world-book-entry-row input,
+  .world-book-entry-row select {
+    min-width: 80px; flex: 1;
+  }
+  .world-book-entry textarea {
+    min-height: 40px;
+  }
 
   /* Card preview — full page */
   .card-preview {
