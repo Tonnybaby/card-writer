@@ -1043,6 +1043,9 @@ input, textarea, select { font-family: inherit; outline: none; }
   .mobile-tab.active { color: var(--primary-dark); }
   .mobile-tab-icon { font-size: 20px; }
   .mobile-tab-label { font-size: 10px; }
+
+  /* Mobile toggle: hide chat or preview */
+  .mobile-hidden { display: none !important; }
 }
 
 /* === Tablet tweaks (768-1024) === */
@@ -2581,10 +2584,12 @@ function switchPage(page) {
   if (page === 'cards') renderCardsPage();
   if (page === 'settings') renderSettingsPage();
 
-  // Sync mobile tabs
-  if (page === 'cards') switchMobileTab('cards');
-  else if (page === 'settings') switchMobileTab('settings');
-  else if (page === 'chat') switchMobileTab('chat');
+  // Sync mobile tabs (mobile only)
+  if (window.innerWidth <= 768) {
+    if (page === 'cards') switchMobileTab('cards');
+    else if (page === 'settings') switchMobileTab('settings');
+    else if (page === 'chat') switchMobileTab('chat');
+  }
 }
 
 // Mobile tab switching
@@ -2605,19 +2610,18 @@ function switchMobileTab(tab) {
 
   if (tab === 'chat') {
     if (chatPage) { chatPage.classList.add('active', 'mobile-active'); }
-    // Show chat area, hide preview
+    // Show chat area, hide preview (use classes, not inline styles)
     const chatArea = document.getElementById('chatArea');
     const cardPreview = document.getElementById('cardPreview');
-    if (chatArea) chatArea.style.display = '';
-    if (cardPreview) cardPreview.style.display = 'none';
+    if (chatArea) { chatArea.classList.remove('mobile-hidden'); }
+    if (cardPreview) { cardPreview.classList.add('mobile-hidden'); }
     state.currentPage = 'chat';
   } else if (tab === 'preview') {
     if (chatPage) { chatPage.classList.add('active', 'mobile-active'); }
-    // Hide chat area, show preview
     const chatArea = document.getElementById('chatArea');
     const cardPreview = document.getElementById('cardPreview');
-    if (chatArea) chatArea.style.display = 'none';
-    if (cardPreview) { cardPreview.style.display = ''; cardPreview.style.width = '100%'; cardPreview.style.borderLeft = 'none'; }
+    if (chatArea) { chatArea.classList.add('mobile-hidden'); }
+    if (cardPreview) { cardPreview.classList.remove('mobile-hidden'); }
     state.currentPage = 'chat';
   } else if (tab === 'cards') {
     if (cardsPage) { cardsPage.classList.add('active', 'mobile-active'); }
