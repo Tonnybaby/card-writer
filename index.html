@@ -3105,10 +3105,19 @@ async function triggerGenerateFromChat() {
     return;
   }
 
+  // Include world book entries if present
+  let wbContext = '';
+  if (worldBookEntries.length > 0) {
+    wbContext = '\n\n【世界书参考】以下是用户已填写的世界书条目，请在生成角色卡时融入这些设定：\n'
+      + worldBookEntries.map((e, i) => `条目${i+1}：标题="${e.title}" 触发词="${e.keys}" 位置=${e.position} 深度=${e.depth}\n内容：${e.content}`).join('\n\n')
+      + '\n请将世界书内容整合到角色卡的 world_book 字段中。';
+  }
+
   const triggerMsg = '请根据我们以上所有对话的内容，从中提取所有角色相关信息，综合整理出一份完整的角色卡。'
     + '不要参考预览面板中的任何内容，完全基于对话历史来构建。'
     + '如果某些信息在对话中没有被提及，请留空不要编造。'
-    + '请严格按以下格式输出：\n'
+    + wbContext
+    + '\n请严格按以下格式输出：\n'
     + '[CHARACTER_CARD]\n'
     + '{\n'
     + '  "name": "角色名称",\n'
@@ -3118,7 +3127,8 @@ async function triggerGenerateFromChat() {
     + '  "first_mes": "首次对话消息",\n'
     + '  "mes_example": "示例对话",\n'
     + '  "tags": ["标签1"],\n'
-    + '  "creator_notes": "备注"\n'
+    + '  "creator_notes": "备注",\n'
+    + '  "world_book": {"entries": [{"title":"...", "keys":"...", "position":"before_char", "depth":0, "content":"..."}]}\n'
     + '}\n'
     + '[/CHARACTER_CARD]';
 
