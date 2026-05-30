@@ -2434,6 +2434,7 @@ function renderMessages() {
           ` : `
             <div class="message-bubble">${contentHtml}</div>
             <div class="message-actions">
+              ${!isUser ? `<button onclick="regenerateMessage(${idx})" title="重新生成">🔄</button>` : ''}
               <button onclick="editMessage(${idx})" title="编辑">✏️</button>
               <button onclick="deleteMessage(${idx})" title="删除">🗑️</button>
               <button onclick="copyMessage(${idx})" title="复制">📋</button>
@@ -3377,6 +3378,18 @@ async function resendToAI() {
   state.generatingForConvId = null;
   document.getElementById('btnSend').disabled = false;
   document.getElementById('btnStopGenerate').style.display = 'none';
+}
+
+async function regenerateMessage(idx) {
+  if (state.isGenerating) return;
+  const conv = state.currentConversation;
+  if (!conv) return;
+  // Delete this AI message and resend
+  conv.messages = conv.messages.slice(0, idx);
+  conv.updatedAt = Date.now();
+  renderMessages();
+  await dbPut('conversations', conv);
+  await resendToAI();
 }
 
 function deleteMessage(idx) {
