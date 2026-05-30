@@ -882,6 +882,175 @@ input, textarea, select { font-family: inherit; outline: none; }
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-8px); }
 }
+/* ===== Collapsible Panels ===== */
+.panel-collapse-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  line-height: 1;
+}
+.panel-collapse-btn:hover { color: var(--primary-dark); }
+
+.conv-list.collapsed { width: 40px; min-width: 40px; }
+.conv-list.collapsed .conv-list-header span,
+.conv-list.collapsed .conv-item-title,
+.conv-list.collapsed .conv-item-meta,
+.conv-list.collapsed .conv-item-actions,
+.conv-list.collapsed .btn-new-chat { display: none; }
+.conv-list.collapsed .conv-list-header { justify-content: center; padding: 14px 8px; }
+
+.chat-area.collapsed { display: none; }
+.card-preview.collapsed { width: 40px; min-width: 40px; overflow: hidden; }
+.card-preview.collapsed .preview-header span,
+.card-preview.collapsed .preview-form,
+.card-preview.collapsed .preview-empty p,
+.card-preview.collapsed .btn-generate-from-chat { display: none; }
+.card-preview.collapsed .preview-header { justify-content: center; padding: 14px 8px; }
+
+/* ===== Message Actions ===== */
+.message-actions {
+  display: none;
+  gap: 4px;
+  margin-top: 4px;
+}
+.message:hover .message-actions { display: flex; }
+.message-actions button {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.message-actions button:hover { background: var(--primary-light); color: var(--primary-dark); }
+
+/* ===== Stop Generation Button ===== */
+.btn-stop-generate {
+  background: var(--danger);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  transition: all var(--transition);
+}
+.btn-stop-generate:hover { background: var(--danger-hover); }
+
+/* ===== Conversation Title Edit ===== */
+.conv-edit-input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--primary);
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.conv-edit-icon {
+  opacity: 0;
+  cursor: pointer;
+  font-size: 11px;
+  margin-left: 4px;
+  transition: opacity var(--transition);
+}
+.conv-item:hover .conv-edit-icon { opacity: 0.6; }
+.conv-edit-icon:hover { opacity: 1 !important; }
+
+/* ===== Resizable Textarea ===== */
+#chatInput {
+  resize: vertical;
+  min-height: 40px;
+  max-height: 300px;
+}
+
+/* ===== World Book ===== */
+.world-book-section {
+  border-top: 2px solid var(--primary-light);
+  padding-top: 12px;
+  margin-top: 8px;
+}
+.world-book-entry {
+  background: var(--primary-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.world-book-entry input, .world-book-entry textarea {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+}
+.world-book-entry textarea { min-height: 50px; resize: vertical; }
+.world-book-entry-row {
+  display: flex;
+  gap: 8px;
+}
+.world-book-entry-row input { flex: 1; }
+.btn-add-wb {
+  background: transparent;
+  border: 1px dashed var(--primary);
+  color: var(--primary-dark);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+  transition: all var(--transition);
+}
+.btn-add-wb:hover { background: var(--primary-light); }
+.btn-remove-wb {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  align-self: flex-end;
+}
+
+/* ===== Message Edit Mode ===== */
+.message-edit-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+.message-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.message-edit-actions button {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.btn-save-edit {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+}
+.btn-cancel-edit {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
 </style>
 </head>
 <body>
@@ -926,7 +1095,10 @@ input, textarea, select { font-family: inherit; outline: none; }
       <div class="conv-list">
         <div class="conv-list-header">
           <span>📝 对话列表</span>
-          <button class="btn-new-chat" id="btnNewChat">+ 新建</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn-new-chat" id="btnNewChat">+ 新建</button>
+            <button class="panel-collapse-btn" onclick="togglePanel('convList')" title="折叠">◀</button>
+          </div>
         </div>
         <div class="conv-list-items" id="convList"></div>
       </div>
@@ -940,8 +1112,10 @@ input, textarea, select { font-family: inherit; outline: none; }
           </div>
         </div>
         <div class="chat-input-area">
-          <textarea id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行..." rows="2"></textarea>
+          <button class="panel-collapse-btn" onclick="togglePanel('chatArea')" title="折叠聊天" style="flex-shrink:0;">▼</button>
+          <textarea id="chatInput" placeholder="输入消息，Shift+Enter 发送，Enter 换行..." rows="2"></textarea>
           <button class="btn-send" id="btnSend" disabled>发送</button>
+          <button class="btn-stop-generate" id="btnStopGenerate" style="display:none;" onclick="stopGeneration()">⏹ 停止</button>
         </div>
       </div>
 
@@ -949,6 +1123,7 @@ input, textarea, select { font-family: inherit; outline: none; }
       <div class="card-preview" id="cardPreview">
         <div class="preview-header">
           <span>📋 卡片预览</span>
+          <button class="panel-collapse-btn" onclick="togglePanel('cardPreview')" title="折叠">▶</button>
         </div>
         <div class="preview-empty" id="previewEmpty">
           <p style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">点击下方按钮<br>让 AI 根据对话生成角色卡</p>
@@ -971,6 +1146,14 @@ input, textarea, select { font-family: inherit; outline: none; }
           <input type="text" id="cardTags" placeholder="例如: 奇幻, 战士, 热血">
           <label>创作者备注</label>
           <textarea id="cardNotes" placeholder="其他备注信息" rows="2"></textarea>
+          <!-- World Book Section -->
+          <div class="world-book-section">
+            <label style="display:flex;justify-content:space-between;align-items:center;">
+              🌐 世界书
+              <button class="btn-add-wb" onclick="addWorldBookEntry()" style="width:auto;padding:4px 12px;">+ 添加条目</button>
+            </label>
+            <div id="worldBookEntries"></div>
+          </div>
           <button class="btn-save-card" id="btnSaveCard">💾 保存到卡片库</button>
         </div>
       </div>
@@ -1292,6 +1475,7 @@ const state = {
   editingCardId: null,
   cardRequested: false,   // true only when user clicked generate button
   generatingForConvId: null, // lock: which conversation is AI generating for
+  personaName: 'AI 助手',  // cached persona name for display
   isGenerating: false,
   settingsTab: 'api'
 };
@@ -1664,6 +1848,16 @@ async function refreshPersonaSelects() {
   sel.innerHTML = personas.length === 0
     ? '<option value="">-- 请先添加 AI 人设 --</option>'
     : personas.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  await updatePersonaName();
+}
+
+async function updatePersonaName() {
+  const sel = document.getElementById('chatPersonaSelect');
+  if (!sel || !sel.value) { state.personaName = 'AI 助手'; return; }
+  try {
+    const persona = await dbGet('aiPersonas', Number(sel.value));
+    state.personaName = persona ? persona.name : 'AI 助手';
+  } catch (e) { state.personaName = 'AI 助手'; }
 }
 
 // ============================================================
@@ -1714,6 +1908,47 @@ async function renderSettingsPage() {
 // ============================================================
 // ===== Chat Engine =====
 // ============================================================
+async function callAIWithAbort(apiConfigId, personaId, messages, signal) {
+  const apiConfig = await dbGet('apiConfigs', Number(apiConfigId));
+  const persona = await dbGet('aiPersonas', Number(personaId));
+  if (!apiConfig) throw new Error('未找到 API 配置');
+  if (!persona) throw new Error('未找到 AI 人设');
+  const systemPrompt = persona.systemPrompt || DEFAULT_PERSONA_PROMPT;
+  const chatMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content }));
+  const allMessages = [{ role: 'system', content: systemPrompt }, ...chatMessages];
+  if (apiConfig.provider === 'anthropic') {
+    return callAnthropicWithAbort(apiConfig, allMessages, signal);
+  } else {
+    return callOpenAIWithAbort(apiConfig, allMessages, signal);
+  }
+}
+
+async function callOpenAIWithAbort(config, messages, signal) {
+  const url = config.endpoint + '/chat/completions';
+  const headers = { 'Content-Type': 'application/json' };
+  if (config.apiKey) headers['Authorization'] = `Bearer ${config.apiKey}`;
+  const response = await fetch(url, {
+    method: 'POST', headers, signal,
+    body: JSON.stringify({ model: config.model, messages, temperature: 0.8, max_tokens: 4096 })
+  });
+  if (!response.ok) { const errText = await response.text(); throw new Error(`API 错误 (${response.status}): ${errText}`); }
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+async function callAnthropicWithAbort(config, messages, signal) {
+  const url = config.endpoint + '/messages';
+  const headers = { 'Content-Type': 'application/json', 'x-api-key': config.apiKey, 'anthropic-version': '2023-06-01' };
+  const systemMsg = messages.find(m => m.role === 'system');
+  const chatMessages = messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }));
+  const body = { model: config.model, max_tokens: 4096, messages: chatMessages };
+  if (systemMsg) body.system = systemMsg.content;
+  const response = await fetch(url, { method: 'POST', headers, signal, body: JSON.stringify(body) });
+  if (!response.ok) { const errText = await response.text(); throw new Error(`Anthropic API 错误 (${response.status}): ${errText}`); }
+  const data = await response.json();
+  return data.content[0].text;
+}
+
 async function callAI(apiConfigId, personaId, messages) {
   const apiConfig = await dbGet('apiConfigs', Number(apiConfigId));
   const persona = await dbGet('aiPersonas', Number(personaId));
@@ -1844,6 +2079,10 @@ function populatePreviewForm(cardData) {
   document.getElementById('cardTags').value = Array.isArray(cardData.tags) ? cardData.tags.join(', ') : (cardData.tags || '');
   document.getElementById('cardNotes').value = cardData.creator_notes || '';
 
+  // World book
+  worldBookEntries = (cardData.world_book && cardData.world_book.entries) ? cardData.world_book.entries.map(e => ({...e})) : [];
+  renderWorldBookEntries();
+
   state.currentCardData = cardData;
 }
 
@@ -1856,7 +2095,8 @@ function getCardDataFromForm() {
     first_mes: document.getElementById('cardFirstMes').value.trim(),
     mes_example: document.getElementById('cardMesExample').value.trim(),
     tags: document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(Boolean),
-    creator_notes: document.getElementById('cardNotes').value.trim()
+    creator_notes: document.getElementById('cardNotes').value.trim(),
+    world_book: worldBookEntries.length > 0 ? { entries: worldBookEntries } : undefined
   };
 }
 
@@ -1865,6 +2105,8 @@ function clearPreview() {
   document.getElementById('previewForm').classList.add('hidden');
   document.getElementById('btnGenerateFromChat').style.display = 'none';
   state.currentCardData = null;
+  worldBookEntries = [];
+  renderWorldBookEntries();
 }
 
 // ============================================================
@@ -1956,7 +2198,8 @@ async function loadConversation(id) {
 
   // Update selects to match conversation's settings
   if (conv.apiConfigId) document.getElementById('chatApiSelect').value = conv.apiConfigId;
-  if (conv.personaId) document.getElementById('chatPersonaSelect').value = conv.personaId;
+  if (conv.personaId) { document.getElementById('chatPersonaSelect').value = conv.personaId; }
+  await updatePersonaName();
 
   // Always show the update card button when there are messages
   document.getElementById('btnGenerateFromChat').style.display = conv.messages.length > 0 ? 'inline-block' : 'none';
@@ -2010,9 +2253,9 @@ async function renderConvList() {
     container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">暂无对话记录</div>';
   } else {
     container.innerHTML = convs.map(c => `
-      <div class="conv-item ${c.id === state.currentConvId ? 'active' : ''}" onclick="loadConversation(${c.id})">
+      <div class="conv-item ${c.id === state.currentConvId ? 'active' : ''}" data-cid="${c.id}" onclick="loadConversation(${c.id})">
         <div class="conv-item-title">
-          ${c.editCardId ? '🔄 ' : ''}${escHtml(c.title)}
+          ${c.editCardId ? '🔄 ' : ''}${escHtml(c.title)}<span class="conv-edit-icon" onclick="startRenameConv(${c.id}, event)" title="重命名">✏️</span>
         </div>
         <div class="conv-item-meta">
           <span>${formatTime(c.createdAt)}</span>
@@ -2043,6 +2286,15 @@ function escHtml(str) {
   return div.innerHTML;
 }
 
+async function getCurrentPersonaName() {
+  const personaId = document.getElementById('chatPersonaSelect').value;
+  if (!personaId) return 'AI 助手';
+  try {
+    const persona = await dbGet('aiPersonas', Number(personaId));
+    return persona ? persona.name : 'AI 助手';
+  } catch (e) { return 'AI 助手'; }
+}
+
 // ============================================================
 // ===== Message Rendering =====
 // ============================================================
@@ -2062,9 +2314,11 @@ function renderMessages() {
     return;
   }
 
+  const aiName = state.personaName || 'AI 助手';
+
   container.innerHTML = conv.messages
-    .filter(m => !m.hidden)  // Skip hidden trigger messages
-    .map(m => {
+    .filter(m => !m.hidden)
+    .map((m, idx) => {
     const isUser = m.role === 'user';
     const cardData = parseCardFromMessage(m.content);
     let contentHtml = renderMarkdown(m.content);
@@ -2079,11 +2333,16 @@ function renderMessages() {
 
     return `
       <div class="message ${isUser ? 'user' : 'ai'}">
-        <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
-        <div>
-          ${!isUser ? `<div class="message-role">AI 助手</div>` : ''}
+        <div class="message-avatar">${isUser ? '👤' : '🎀'}</div>
+        <div style="flex:1;min-width:0;">
+          ${!isUser ? `<div class="message-role">${escHtml(aiName)}</div>` : ''}
           <div class="message-bubble">${contentHtml}</div>
-          ${m.timestamp ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">${formatTime(m.timestamp)}</div>` : ''}
+          ${m.timestamp ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${formatTime(m.timestamp)}</div>` : ''}
+          <div class="message-actions">
+            <button onclick="editMessage(${idx})" title="编辑后重问AI">✏️</button>
+            <button onclick="deleteMessage(${idx})" title="删除此消息及之后">🗑️</button>
+            <button onclick="copyMessage(${idx})" title="复制">📋</button>
+          </div>
         </div>
       </div>
     `;
@@ -2186,6 +2445,7 @@ async function sendMessage() {
 
   input.value = '';
   document.getElementById('btnSend').disabled = true;
+  document.getElementById('btnStopGenerate').style.display = 'inline-block';
   state.isGenerating = true;
 
   // Add user message
@@ -2197,7 +2457,7 @@ async function sendMessage() {
   typingEl.className = 'message ai';
   typingEl.id = 'typingIndicator';
   typingEl.innerHTML = `
-    <div class="message-avatar">🤖</div>
+    <div class="message-avatar">🎀</div>
     <div class="message-bubble">
       <div class="typing-indicator">
         <span></span><span></span><span></span>
@@ -2207,9 +2467,10 @@ async function sendMessage() {
   msgContainer.appendChild(typingEl);
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
+  // Set up abort controller
+  abortController = new AbortController();
   try {
-    const response = await callAI(apiConfigId, personaId, conv.messages);
-    // Remove typing indicator
+    const response = await callAIWithAbort(apiConfigId, personaId, conv.messages, abortController.signal);
     const ti = document.getElementById('typingIndicator');
     if (ti) ti.remove();
 
@@ -2218,13 +2479,17 @@ async function sendMessage() {
   } catch (err) {
     const ti = document.getElementById('typingIndicator');
     if (ti) ti.remove();
-    showToast('发送失败: ' + err.message, 'error');
-    console.error(err);
+    if (err.name !== 'AbortError') {
+      showToast('发送失败: ' + err.message, 'error');
+      console.error(err);
+    }
   }
 
+  abortController = null;
   state.isGenerating = false;
   state.generatingForConvId = null;
   document.getElementById('btnSend').disabled = false;
+  document.getElementById('btnStopGenerate').style.display = 'none';
   document.getElementById('chatInput').focus();
 }
 
@@ -2318,6 +2583,7 @@ async function triggerGenerateFromChat() {
   state.generatingForConvId = conv.id;
 
   document.getElementById('btnSend').disabled = true;
+  document.getElementById('btnStopGenerate').style.display = 'inline-block';
   state.isGenerating = true;
   appendMessage('user', triggerMsg, true); // hidden message — AI sees it, user doesn't
 
@@ -2326,7 +2592,7 @@ async function triggerGenerateFromChat() {
   typingEl.className = 'message ai';
   typingEl.id = 'typingIndicator';
   typingEl.innerHTML = `
-    <div class="message-avatar">🤖</div>
+    <div class="message-avatar">🎀</div>
     <div class="message-bubble">
       <div class="typing-indicator"><span></span><span></span><span></span></div>
     </div>
@@ -2334,20 +2600,25 @@ async function triggerGenerateFromChat() {
   msgContainer.appendChild(typingEl);
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
+  abortController = new AbortController();
   try {
-    const response = await callAI(apiConfigId, personaId, conv.messages);
+    const response = await callAIWithAbort(apiConfigId, personaId, conv.messages, abortController.signal);
     const ti = document.getElementById('typingIndicator');
     if (ti) ti.remove();
     appendMessage('assistant', response);
   } catch (err) {
     const ti = document.getElementById('typingIndicator');
     if (ti) ti.remove();
-    showToast('生成失败: ' + err.message, 'error');
+    if (err.name !== 'AbortError') {
+      showToast('生成失败: ' + err.message, 'error');
+    }
   }
 
+  abortController = null;
   state.isGenerating = false;
   state.generatingForConvId = null;
   document.getElementById('btnSend').disabled = false;
+  document.getElementById('btnStopGenerate').style.display = 'none';
 }
 
 // ============================================================
@@ -2544,7 +2815,7 @@ function buildCardV2JSON(card) {
       creator: '',
       character_version: '1.0',
       alternate_greetings: [],
-      extensions: {}
+      extensions: card.world_book ? { world_book: card.world_book } : {}
     }
   };
 }
@@ -2856,6 +3127,152 @@ function extractCharaFromPNG(bytes) {
 }
 
 // ============================================================
+// ===== Panel Collapse =====
+// ============================================================
+function togglePanel(name) {
+  let el, btn;
+  if (name === 'convList') { el = document.querySelector('.conv-list'); btn = document.querySelector('.conv-list-header .panel-collapse-btn'); }
+  else if (name === 'chatArea') { el = document.getElementById('chatArea'); btn = document.querySelector('.chat-input-area .panel-collapse-btn'); }
+  else if (name === 'cardPreview') { el = document.getElementById('cardPreview'); btn = document.querySelector('.preview-header .panel-collapse-btn'); }
+  if (!el) return;
+  el.classList.toggle('collapsed');
+  if (btn) btn.textContent = el.classList.contains('collapsed') ? (name === 'cardPreview' ? '◀' : '▶') : (name === 'cardPreview' ? '▶' : '▼');
+}
+
+// ============================================================
+// ===== Conversation Rename =====
+// ============================================================
+function startRenameConv(id, event) {
+  event.stopPropagation();
+  const item = document.querySelector(`.conv-item[data-cid="${id}"]`);
+  if (!item) return;
+  const titleEl = item.querySelector('.conv-item-title');
+  const current = titleEl.textContent.replace('🔄 ', '');
+  titleEl.innerHTML = `<input class="conv-edit-input" value="${escHtml(current)}" id="renameInput_${id}" onkeydown="if(event.key==='Enter')saveRenameConv(${id})" onclick="event.stopPropagation()">`;
+  document.getElementById(`renameInput_${id}`).focus();
+  document.getElementById(`renameInput_${id}`).select();
+}
+
+async function saveRenameConv(id) {
+  const input = document.getElementById(`renameInput_${id}`);
+  if (!input) return;
+  const newTitle = input.value.trim();
+  if (!newTitle) { renderConvList(); return; }
+  const conv = await dbGet('conversations', id);
+  if (conv) { conv.title = newTitle; conv.updatedAt = Date.now(); await dbPut('conversations', conv); }
+  if (state.currentConvId === id && state.currentConversation) { state.currentConversation.title = newTitle; }
+  renderConvList();
+}
+
+// ============================================================
+// ===== Message Actions =====
+// ============================================================
+function editMessage(idx) {
+  if (state.isGenerating) return;
+  const conv = state.currentConversation;
+  if (!conv) return;
+  const msg = conv.messages[idx];
+  if (!msg) return;
+  // Truncate conversation to before this message
+  conv.messages = conv.messages.slice(0, idx);
+  conv.updatedAt = Date.now();
+  // Show the message content in input for editing
+  document.getElementById('chatInput').value = msg.content;
+  document.getElementById('chatInput').focus();
+  renderMessages();
+  dbPut('conversations', conv);
+  showToast('消息已加载到输入框，修改后重新发送', 'info');
+}
+
+function deleteMessage(idx) {
+  if (state.isGenerating) return;
+  const conv = state.currentConversation;
+  if (!conv) return;
+  showConfirm('确定删除这条消息吗？之后的对话也会被截断。', async () => {
+    conv.messages = conv.messages.slice(0, idx);
+    conv.updatedAt = Date.now();
+    await dbPut('conversations', conv);
+    renderMessages();
+  });
+}
+
+function copyMessage(idx) {
+  const conv = state.currentConversation;
+  if (!conv) return;
+  const msg = conv.messages[idx];
+  if (!msg) return;
+  navigator.clipboard.writeText(msg.content).then(() => showToast('已复制到剪贴板', 'success'));
+}
+
+// ============================================================
+// ===== Stop Generation =====
+// ============================================================
+let abortController = null;
+
+async function stopGeneration() {
+  if (abortController) {
+    abortController.abort();
+    abortController = null;
+  }
+  state.isGenerating = false;
+  state.generatingForConvId = null;
+  document.getElementById('btnSend').disabled = false;
+  document.getElementById('btnStopGenerate').style.display = 'none';
+  // Remove typing indicator
+  const ti = document.getElementById('typingIndicator');
+  if (ti) ti.remove();
+  showToast('已停止生成', 'info');
+}
+
+// ============================================================
+// ===== World Book =====
+// ============================================================
+let worldBookEntries = [];
+
+function addWorldBookEntry(data = {}) {
+  worldBookEntries.push({
+    title: data.title || '',
+    keys: data.keys || '',
+    position: data.position || 'before_char',
+    depth: data.depth || 0,
+    content: data.content || ''
+  });
+  renderWorldBookEntries();
+}
+
+function removeWorldBookEntry(idx) {
+  worldBookEntries.splice(idx, 1);
+  renderWorldBookEntries();
+}
+
+function renderWorldBookEntries() {
+  const container = document.getElementById('worldBookEntries');
+  if (!container) return;
+  if (worldBookEntries.length === 0) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);padding:8px 0;">暂无世界书条目</div>';
+    return;
+  }
+  container.innerHTML = worldBookEntries.map((e, i) => `
+    <div class="world-book-entry">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;font-weight:600;color:var(--text-secondary);">条目 ${i + 1}</span>
+        <button class="btn-remove-wb" onclick="removeWorldBookEntry(${i})">✕</button>
+      </div>
+      <input type="text" placeholder="标题" value="${escHtml(e.title)}" onchange="worldBookEntries[${i}].title=this.value">
+      <div class="world-book-entry-row">
+        <input type="text" placeholder="触发词 (逗号分隔)" value="${escHtml(e.keys)}" onchange="worldBookEntries[${i}].keys=this.value">
+        <select onchange="worldBookEntries[${i}].position=this.value" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+          <option value="before_char" ${e.position==='before_char'?'selected':''}>角色前</option>
+          <option value="after_char" ${e.position==='after_char'?'selected':''}>角色后</option>
+        </select>
+        <input type="number" placeholder="深度" value="${e.depth}" style="width:60px;" onchange="worldBookEntries[${i}].depth=parseInt(this.value)||0">
+      </div>
+      <textarea placeholder="世界书内容..." rows="3" onchange="worldBookEntries[${i}].content=this.value">${escHtml(e.content)}</textarea>
+    </div>
+  `).join('');
+}
+
+// ============================================================
 // ===== Event Listeners =====
 // ============================================================
 document.getElementById('btnNewChat').addEventListener('click', () => createConversation());
@@ -2863,13 +3280,16 @@ document.getElementById('btnSend').addEventListener('click', sendMessage);
 document.getElementById('btnSaveCard').addEventListener('click', saveCard);
 document.getElementById('btnGenerateFromChat').addEventListener('click', triggerGenerateFromChat);
 
-// Chat input: Enter to send, Shift+Enter for newline
+// Chat input: Shift+Enter to send, Enter for newline
 document.getElementById('chatInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 });
+
+// Persona select change - update cached name
+document.getElementById('chatPersonaSelect').addEventListener('change', updatePersonaName);
 
 // Search input
 document.getElementById('cardSearch').addEventListener('input', renderCardsPage);
