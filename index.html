@@ -4619,12 +4619,16 @@ async function init() {
   for (const sp of systemPersonas) {
     const existing = personas.find(p => p.name === sp.name);
     if (existing) {
-      existing.systemPrompt = sp.prompt;
-      existing.description = sp.description;
-      existing.isSystem = true;
-      existing.avatar = sp.avatar;
-      existing.updatedAt = Date.now();
-      await dbPut('aiPersonas', existing);
+      // Re-read fresh from DB to avoid stale object issues
+      const fresh = await dbGet('aiPersonas', existing.id);
+      if (fresh) {
+        fresh.systemPrompt = sp.prompt;
+        fresh.description = sp.description;
+        fresh.isSystem = true;
+        fresh.avatar = sp.avatar;
+        fresh.updatedAt = Date.now();
+        await dbPut('aiPersonas', fresh);
+      }
     } else {
       await dbAdd('aiPersonas', {
         name: sp.name,
