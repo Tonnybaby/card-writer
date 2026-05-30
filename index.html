@@ -42,6 +42,7 @@ body {
   height: 100vh;
   overflow: hidden;
   display: flex;
+  flex-direction: column;
 }
 
 a { color: var(--primary); text-decoration: none; }
@@ -133,10 +134,9 @@ input, textarea, select { font-family: inherit; outline: none; }
 }
 .global-topbar select:focus { border-color: var(--primary); }
 
-.right-panel {
+.body-layout {
   flex: 1;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
   min-width: 0;
 }
@@ -886,40 +886,37 @@ input, textarea, select { font-family: inherit; outline: none; }
 </head>
 <body>
 
-<!-- Sidebar -->
-<nav class="sidebar">
-  <div class="sidebar-nav">
-    <button class="nav-item active" data-page="chat">
-      <span class="icon">💬</span>
-      <span>写卡对话</span>
-    </button>
-    <button class="nav-item" data-page="cards">
-      <span class="icon">📚</span>
-      <span>卡片库</span>
-    </button>
-    <button class="nav-item" data-page="settings">
-      <span class="icon">⚙️</span>
-      <span>API / 人设</span>
-    </button>
-  </div>
-</nav>
+<!-- Global Top Bar (full width) -->
+<div class="global-topbar" id="globalTopbar">
+  <span class="topbar-brand">
+    <span class="topbar-title">🌸 写卡助手</span>
+    <span class="topbar-subtitle">你的AI写卡助手</span>
+  </span>
+  <span class="topbar-label">API</span>
+  <select id="chatApiSelect"></select>
+  <span class="topbar-label">人设</span>
+  <select id="chatPersonaSelect"></select>
+</div>
 
-<!-- Right Panel: Top Bar + Main Content -->
-<div class="right-panel">
-  <!-- Global Top Bar -->
-  <div class="global-topbar" id="globalTopbar">
-    <span class="topbar-brand">
-      <span class="topbar-title">🌸 写卡助手</span>
-      <span class="topbar-subtitle">你的AI写卡助手</span>
-    </span>
-    <span class="topbar-label">API</span>
-    <select id="chatApiSelect"></select>
-    <span class="topbar-label">人设</span>
-    <select id="chatPersonaSelect"></select>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main" id="mainContent">
+<!-- Body: Sidebar + Main Content -->
+<div class="body-layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-nav">
+      <button class="nav-item active" data-page="chat">
+        <span class="icon">💬</span>
+        <span>写卡对话</span>
+      </button>
+      <button class="nav-item" data-page="cards">
+        <span class="icon">📚</span>
+        <span>卡片库</span>
+      </button>
+      <button class="nav-item" data-page="settings">
+        <span class="icon">⚙️</span>
+        <span>API / 人设</span>
+      </button>
+    </div>
+  </nav>
 
   <!-- ===== Chat Page ===== -->
   <div class="page active" id="page-chat">
@@ -1018,7 +1015,7 @@ input, textarea, select { font-family: inherit; outline: none; }
     </div>
   </div>
 </div>
-</div><!-- /right-panel -->
+</div><!-- /body-layout -->
 
 <!-- Modals -->
 <div class="modal-overlay hidden" id="apiModalOverlay">
