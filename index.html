@@ -148,6 +148,18 @@ input, textarea, select { font-family: inherit; outline: none; }
   opacity: 0.6;
   white-space: nowrap;
 }
+.mobile-selects {
+  display: none;
+}
+.mobile-selects select {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--text);
+  min-width: 80px;
+}
 .topbar-label {
   font-size: 11px;
   color: var(--text-secondary);
@@ -880,147 +892,137 @@ input, textarea, select { font-family: inherit; outline: none; }
   .sidebar-disclaimer { display: none; }
 }
 
+/* ===== Mobile Bottom Tab Bar (hidden on desktop) ===== */
+.mobile-tab-bar { display: none; }
+
 /* === Mobile (max 768px) === */
 @media (max-width: 768px) {
-  body {
+  body, .body-layout, .main, .page, .chat-layout {
     overflow-x: hidden;
+  }
+  body {
     flex-direction: column;
+    padding-top: 48px;
+    padding-bottom: 56px;
   }
 
-  /* Sidebar → top tab bar */
-  .sidebar {
-    width: 100% !important;
-    flex-shrink: 0;
-    flex-direction: row;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-  }
-  .sidebar-nav {
-    flex-direction: row;
-    gap: 0;
-    padding: 4px 8px;
-    flex: 1;
-    border-top: none;
-  }
-  .nav-item {
-    padding: 8px 12px;
-    font-size: 12px;
-    white-space: nowrap;
-    border-radius: 16px;
-    flex-shrink: 0;
-  }
-  .nav-item .icon { font-size: 14px; width: auto; }
-  .nav-item span { display: inline; }
-  .sidebar-disclaimer { display: none; }
+  /* Hide desktop sidebar */
+  .sidebar { display: none; }
 
-  /* Global topbar */
+  /* Fixed top bar */
   .global-topbar {
-    padding: 0 12px;
-    height: 44px;
-    gap: 8px;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    height: 48px;
+    padding: 0 10px;
+    gap: 6px;
   }
-  .topbar-title { font-size: 16px; }
+  .topbar-title { font-size: 15px; }
   .topbar-subtitle { display: none; }
-  .topbar-author { font-size: 9px; }
+  .topbar-author { font-size: 9px; margin-left: auto; }
+  .topbar-brand { margin-right: auto; }
 
-  /* Body layout → single column */
-  .body-layout {
-    flex-direction: column;
-    overflow-y: auto;
+  /* Show API/persona selects in topbar on mobile */
+  .mobile-selects {
+    display: flex; gap: 4px; align-items: center;
   }
 
-  /* Chat layout → stacked */
-  .chat-layout {
-    flex-direction: column;
-  }
+  /* Body layout */
+  .body-layout { flex-direction: column; overflow-y: auto; flex: 1; }
+  .main { flex: 1; overflow-y: auto; }
 
-  /* Conv list → collapsible strip */
+  /* Hide dividers, collapse buttons */
+  .divider-left, .divider-right { display: none; }
+  .collapse-toggle { display: none; }
+
+  /* Show only active page */
+  .page { display: none !important; }
+  .page.mobile-active { display: flex !important; flex-direction: column; }
+
+  /* Chat layout */
+  .chat-layout { flex-direction: column; }
   .conv-list {
-    width: 100% !important;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    max-height: 120px;
-    flex-shrink: 0;
+    width: 100% !important; border-right: none;
+    max-height: 100px; flex-shrink: 0; overflow-y: auto;
   }
-  .conv-list-header { padding: 8px 12px; }
-  .conv-list-items { display: flex; flex-direction: row; gap: 6px; padding: 6px 8px; overflow-x: auto; }
-  .conv-item { min-width: 130px; flex-shrink: 0; white-space: nowrap; padding: 8px 10px; }
+  .conv-list-header { padding: 6px 10px; font-size: 13px; }
+  .conv-list-items { display: flex; flex-direction: row; gap: 4px; padding: 4px 8px; overflow-x: auto; }
+  .conv-item { min-width: 120px; flex-shrink: 0; padding: 6px 8px; font-size: 12px; }
   .conv-item-title { font-size: 12px; }
   .conv-item-meta { font-size: 10px; }
   .conv-item-actions { display: none; }
-
-  /* Divider toggles hidden */
-  .divider-left, .divider-right { display: none; }
-
-  /* Chat area */
-  .chat-area {
-    flex: 1;
-    min-height: 60vh;
-  }
-  .messages-container { padding: 12px; gap: 10px; }
-  .message { max-width: 92%; }
-  .message-bubble { font-size: 13px; padding: 10px 14px; }
-
-  /* Chat input bar fixed at bottom */
-  .chat-input-area {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 30;
-    padding: 8px 10px;
-    gap: 8px;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
-  }
-  .chat-input-area textarea {
-    flex: 1;
-    font-size: 14px;
-    padding: 10px 12px;
-    min-height: 44px;
-    max-height: 120px;
-  }
-  .btn-send {
-    width: 72px;
-    flex-shrink: 0;
-    padding: 10px 0;
-    font-size: 14px;
-  }
-  .btn-stop-generate { font-size: 12px; padding: 8px 12px; }
-
-  /* Add bottom padding so messages don't hide behind input */
-  .messages-container { padding-bottom: 90px; }
-
-  /* Card preview → below chat, full width */
-  .card-preview {
-    width: 100% !important;
-    border-left: none;
-    border-top: 2px solid var(--primary-light);
-    max-height: 60vh;
-    margin-bottom: 80px;
-  }
-  .preview-header { padding: 10px 16px; }
-  .preview-form-fields { padding: 0 16px; gap: 12px; }
-  .preview-form-actions { padding: 12px 16px; }
-  .preview-form input, .preview-form textarea { font-size: 14px; padding: 10px 12px; }
-
-  /* Modals */
-  .modal { width: 90vw; max-width: none; padding: 20px; }
-  .modal h3 { font-size: 16px; }
-  .modal-field input, .modal-field textarea, .modal-field select { font-size: 14px; }
-
-  /* Cards page */
-  .cards-page { padding: 12px; }
-  .card-grid { grid-template-columns: 1fr; }
-
-  /* Settings */
-  .settings-page { padding: 12px; }
-  .config-item { flex-direction: column; gap: 10px; }
-  .config-actions { align-self: flex-end; }
+  .btn-new-chat { padding: 4px 10px; font-size: 11px; }
 
   /* Chat settings bar */
   .chat-settings-bar { padding: 4px 8px; gap: 4px; }
-  .chat-settings-bar select { font-size: 11px; min-width: 100px; padding: 4px 6px; }
+  .chat-settings-bar select { font-size: 11px; min-width: 90px; padding: 4px 6px; }
+
+  /* Chat area */
+  .chat-area { flex: 1; display: flex; flex-direction: column; }
+  .messages-container { flex: 1; padding: 10px; gap: 8px; padding-bottom: 140px; }
+  .message { max-width: 92%; }
+  .message-bubble { font-size: 13px; padding: 8px 12px; }
+
+  /* Chat input — fixed above tab bar */
+  .chat-input-area {
+    position: fixed; bottom: 56px; left: 0; right: 0;
+    z-index: 30; padding: 6px 8px; gap: 6px;
+    background: var(--bg-card); border-top: 1px solid var(--border);
+    box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
+  }
+  .chat-input-area textarea { flex: 1; font-size: 14px; padding: 8px 10px; min-height: 40px; max-height: 100px; }
+  .btn-send { width: 64px; flex-shrink: 0; padding: 8px 0; font-size: 13px; border-radius: 20px; }
+  .btn-stop-generate { font-size: 11px; padding: 6px 10px; }
+
+  /* Card preview — full page */
+  .card-preview {
+    width: 100% !important; border-left: none; flex: 1; overflow-y: auto;
+  }
+  .preview-header { padding: 10px 16px; position: sticky; top: 0; }
+  .preview-form-fields { padding: 0 16px; gap: 12px; }
+  .preview-form-actions {
+    padding: 12px 16px; position: sticky; bottom: 0; background: var(--bg-card);
+  }
+  .preview-form input, .preview-form textarea { font-size: 14px; padding: 10px 12px; }
+
+  /* Cards page */
+  .cards-page { padding: 10px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .cards-search { flex-wrap: wrap; }
+
+  /* Settings */
+  .settings-page { padding: 10px; }
+  .config-item { flex-direction: column; gap: 8px; }
+  .config-actions { align-self: flex-end; }
+
+  /* Modals */
+  .modal { width: 92vw; max-width: none; max-height: 80vh; overflow-y: auto; padding: 16px; }
+  .modal h3 { font-size: 16px; }
+  .modal-field input, .modal-field textarea, .modal-field select { font-size: 14px; }
+
+  /* Show mobile tab bar */
+  .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    height: 56px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+  }
+  .mobile-tab {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px; background: transparent; border: none;
+    cursor: pointer; color: var(--text-secondary);
+    font-size: 10px; transition: all var(--transition);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobile-tab.active { color: var(--primary-dark); }
+  .mobile-tab-icon { font-size: 20px; }
+  .mobile-tab-label { font-size: 10px; }
 }
 
 /* === Tablet tweaks (768-1024) === */
@@ -1334,6 +1336,10 @@ input, textarea, select { font-family: inherit; outline: none; }
     <span class="topbar-title">🌸 写卡助手</span>
     <span class="topbar-subtitle">你的AI写卡助手</span>
   </span>
+  <span class="mobile-selects">
+    <select id="chatApiSelectMobile"></select>
+    <select id="chatPersonaSelectMobile"></select>
+  </span>
   <span class="topbar-author">网站作者：Tonny_Liu</span>
 </div>
 
@@ -1635,6 +1641,26 @@ input, textarea, select { font-family: inherit; outline: none; }
 
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- ===== Mobile Bottom Tab Bar ===== -->
+<div class="mobile-tab-bar" id="mobileTabBar">
+  <button class="mobile-tab active" data-mtab="chat" onclick="switchMobileTab('chat')">
+    <span class="mobile-tab-icon">💬</span>
+    <span class="mobile-tab-label">对话</span>
+  </button>
+  <button class="mobile-tab" data-mtab="preview" onclick="switchMobileTab('preview')">
+    <span class="mobile-tab-icon">📋</span>
+    <span class="mobile-tab-label">预览</span>
+  </button>
+  <button class="mobile-tab" data-mtab="cards" onclick="switchMobileTab('cards')">
+    <span class="mobile-tab-icon">📚</span>
+    <span class="mobile-tab-label">卡片库</span>
+  </button>
+  <button class="mobile-tab" data-mtab="settings" onclick="switchMobileTab('settings')">
+    <span class="mobile-tab-icon">⚙️</span>
+    <span class="mobile-tab-label">设置</span>
+  </button>
+</div>
 
 <script>
 // ============================================================
@@ -2522,7 +2548,7 @@ document.getElementById('confirmBtn').addEventListener('click', () => {
 // ============================================================
 function switchPage(page) {
   state.currentPage = page;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'mobile-active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
   const pageEl = document.getElementById(`page-${page}`);
@@ -2534,6 +2560,54 @@ function switchPage(page) {
 
   if (page === 'cards') renderCardsPage();
   if (page === 'settings') renderSettingsPage();
+
+  // Sync mobile tabs
+  if (page === 'cards') switchMobileTab('cards');
+  else if (page === 'settings') switchMobileTab('settings');
+  else if (page === 'chat') switchMobileTab('chat');
+}
+
+// Mobile tab switching
+let mobileCurrentTab = 'chat';
+function switchMobileTab(tab) {
+  mobileCurrentTab = tab;
+  // Update tab bar active state
+  document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+  const tabEl = document.querySelector(`.mobile-tab[data-mtab="${tab}"]`);
+  if (tabEl) tabEl.classList.add('active');
+
+  // Hide all pages, show relevant one
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active', 'mobile-active'); });
+
+  const chatPage = document.getElementById('page-chat');
+  const cardsPage = document.getElementById('page-cards');
+  const settingsPage = document.getElementById('page-settings');
+
+  if (tab === 'chat') {
+    if (chatPage) { chatPage.classList.add('active', 'mobile-active'); }
+    // Show chat area, hide preview
+    const chatArea = document.getElementById('chatArea');
+    const cardPreview = document.getElementById('cardPreview');
+    if (chatArea) chatArea.style.display = '';
+    if (cardPreview) cardPreview.style.display = 'none';
+    state.currentPage = 'chat';
+  } else if (tab === 'preview') {
+    if (chatPage) { chatPage.classList.add('active', 'mobile-active'); }
+    // Hide chat area, show preview
+    const chatArea = document.getElementById('chatArea');
+    const cardPreview = document.getElementById('cardPreview');
+    if (chatArea) chatArea.style.display = 'none';
+    if (cardPreview) { cardPreview.style.display = ''; cardPreview.style.width = '100%'; cardPreview.style.borderLeft = 'none'; }
+    state.currentPage = 'chat';
+  } else if (tab === 'cards') {
+    if (cardsPage) { cardsPage.classList.add('active', 'mobile-active'); }
+    renderCardsPage();
+    state.currentPage = 'cards';
+  } else if (tab === 'settings') {
+    if (settingsPage) { settingsPage.classList.add('active', 'mobile-active'); }
+    renderSettingsPage();
+    state.currentPage = 'settings';
+  }
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -2758,7 +2832,7 @@ async function deleteApiConfig(id) {
 
 async function refreshApiSelects() {
   const configs = await dbGetAll('apiConfigs');
-  const selects = ['chatApiSelect'];
+  const selects = ['chatApiSelect', 'chatApiSelectMobile'];
   selects.forEach(selId => {
     const sel = document.getElementById(selId);
     if (!sel) return;
@@ -2876,6 +2950,7 @@ async function previewSystemPersona(id) {
 
 async function refreshPersonaSelects() {
   const personas = await dbGetAll('aiPersonas');
+  // Update main select
   const sel = document.getElementById('chatPersonaSelect');
   if (!sel) return;
   // Sort: system personas in fixed order, then user personas
@@ -2891,6 +2966,9 @@ async function refreshPersonaSelects() {
   sel.innerHTML = personas.length === 0
     ? '<option value="">-- 请先添加 AI 人设 --</option>'
     : personas.map(p => `<option value="${p.id}">${p.avatar || ''} ${p.name}</option>`).join('');
+  // Sync to mobile select
+  const mobileSel = document.getElementById('chatPersonaSelectMobile');
+  if (mobileSel) mobileSel.innerHTML = sel.innerHTML;
   await updatePersonaName();
 }
 
@@ -3270,12 +3348,20 @@ async function loadConversation(id) {
   updateSaveButtonText();
 
   // Restore API select
-  if (conv.apiConfigId != null) document.getElementById('chatApiSelect').value = conv.apiConfigId;
+  if (conv.apiConfigId != null) {
+    document.getElementById('chatApiSelect').value = conv.apiConfigId;
+    const ma = document.getElementById('chatApiSelectMobile');
+    if (ma) ma.value = conv.apiConfigId;
+  }
 
   // Restore persona: use stored personaName directly (no async DB lookup needed)
   if (conv.personaName) {
     state.personaName = conv.personaName;
-    if (conv.personaId != null) document.getElementById('chatPersonaSelect').value = conv.personaId;
+    if (conv.personaId != null) {
+      document.getElementById('chatPersonaSelect').value = conv.personaId;
+      const mp = document.getElementById('chatPersonaSelectMobile');
+      if (mp) mp.value = conv.personaId;
+    }
   } else if (conv.personaId != null) {
     // Legacy conversation: backfill personaName
     document.getElementById('chatPersonaSelect').value = conv.personaId;
@@ -4586,6 +4672,17 @@ function initInputResize() {
 
 // Persona select change - update cached name
 document.getElementById('chatPersonaSelect').addEventListener('change', updatePersonaName);
+
+// Sync mobile selects with main ones
+const apiMobile = document.getElementById('chatApiSelectMobile');
+const personaMobile = document.getElementById('chatPersonaSelectMobile');
+if (apiMobile) apiMobile.addEventListener('change', () => {
+  document.getElementById('chatApiSelect').value = apiMobile.value;
+});
+if (personaMobile) personaMobile.addEventListener('change', () => {
+  document.getElementById('chatPersonaSelect').value = personaMobile.value;
+  updatePersonaName();
+});
 
 // Search input
 document.getElementById('cardSearch').addEventListener('input', renderCardsPage);
