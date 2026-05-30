@@ -2578,8 +2578,8 @@ async function loadConversation(id) {
   updateSaveButtonText();
 
   // Update selects to match conversation's settings
-  if (conv.apiConfigId) document.getElementById('chatApiSelect').value = conv.apiConfigId;
-  if (conv.personaId) { document.getElementById('chatPersonaSelect').value = conv.personaId; }
+  if (conv.apiConfigId != null) document.getElementById('chatApiSelect').value = conv.apiConfigId;
+  if (conv.personaId != null) { document.getElementById('chatPersonaSelect').value = conv.personaId; }
   await updatePersonaName();
 
   // Always show the update card button when there are messages
@@ -2787,11 +2787,8 @@ function appendMessage(role, content, hidden = false) {
     renderConvList();
 
     // Only populate preview if user clicked the generate button
-    // Bug fix ⑥: use requestAnimationFrame to ensure DOM has rendered
     if (state.cardRequested) {
-      requestAnimationFrame(() => {
-        populatePreviewForm(cardData);
-      });
+      populatePreviewForm(cardData);
       state.cardRequested = false;
     }
   }
